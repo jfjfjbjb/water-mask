@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { DeleteOutlined, InboxOutlined } from "@ant-design/icons";
-import { Col, Row, Upload, Image, Button, Empty } from "antd";
+import { Col, Row, Upload, Image, Button, Empty, Space, Select } from "antd";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { snapdom } from "@zumer/snapdom";
 import posUrl from "./assets/pos.svg";
@@ -13,6 +13,7 @@ type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 function App() {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [modifyItem, setModifyItem] = useState();
+  const [scale, setScale] = useState(1);
   const target = useRef(null);
 
   const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
@@ -74,7 +75,10 @@ function App() {
                       style={{ flexGrow: 1, justifyContent: "flex-start" }}
                       color="default"
                       variant="link"
-                      onClick={() => setModifyItem({ file })}
+                      onClick={() => {
+                        setModifyItem({ file });
+                        setScale(1);
+                      }}
                     >
                       {file.name}
                     </Button>
@@ -117,8 +121,20 @@ function App() {
                         bottom: "5em",
                       }}
                     >
-                      <div style={{ fontSize: 80, fontWeight: 300 }}>16:43</div>
-                      <div style={{ fontSize: 20, color: "#eaeaea" }}>
+                      <div
+                        style={{
+                          fontSize: Math.ceil(80 * scale),
+                          fontWeight: 300,
+                        }}
+                      >
+                        16:43
+                      </div>
+                      <div
+                        style={{
+                          fontSize: Math.ceil(20 * scale),
+                          color: "#eaeaea",
+                        }}
+                      >
                         <span>2024.6.3 星期一</span>
                         <span style={{ marginLeft: 16 }}>
                           <img
@@ -132,7 +148,7 @@ function App() {
                     </div>
                     <div
                       style={{
-                        fontSize: 16,
+                        fontSize: Math.ceil(16 * scale),
                         opacity: 0.65,
                         position: "absolute",
                         bottom: 12,
@@ -144,17 +160,34 @@ function App() {
                   </div>
                 </div>
                 <div className="toolbar">
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      snapdom.download(target.current, {
-                        format: "jpg",
-                        filename: "my-capture.jpg",
-                      });
-                    }}
-                  >
-                    下载
-                  </Button>
+                  <Space>
+                    <Select
+                      value={scale}
+                      prefix={"字体比例："}
+                      style={{ width: 150 }}
+                      options={Array.from({ length: 16 }, (_, i) => {
+                        const x = (0.5 + i * 0.1).toFixed(1);
+                        return {
+                          value: x,
+                          label: `${x}倍`,
+                        };
+                      })}
+                      onChange={(val) => {
+                        setScale(val);
+                      }}
+                    />
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        snapdom.download(target.current, {
+                          format: "jpg",
+                          filename: "my-capture.jpg",
+                        });
+                      }}
+                    >
+                      下载
+                    </Button>
+                  </Space>
                 </div>
               </div>
             ) : (

@@ -18,13 +18,13 @@ import {
 } from "antd";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { snapdom } from "@zumer/snapdom";
+import AsyncImage from "./components/AsyncImage/Index";
 import posUrl from "./assets/pos.svg";
 import "./App.css";
 
 const { Dragger } = Upload;
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
-
 function App() {
   // const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [modifyItem, setModifyItem] = useState();
@@ -32,7 +32,7 @@ function App() {
   const target = useRef(null);
 
   const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
-    console.log(newFileList);
+    // console.log(newFileList);
   };
 
   return (
@@ -64,11 +64,11 @@ function App() {
               ) => {
                 return (
                   <div className="custom-item">
-                    <Image
+                    {/* <Image
                       width={48}
                       height={48}
                       styles={{ image: { borderRadius: "4px" } }}
-                      src={URL.createObjectURL(file.originFileObj as FileType)}
+                      // src={URL.createObjectURL(file.originFileObj as FileType)}
                       // 关键：控制图片自身适应方式
                       style={{
                         width: "100%",
@@ -76,7 +76,8 @@ function App() {
                         objectFit: "contain", // 或 'cover'，见下方解释
                         display: "block", // 避免flex容器内的间隙问题
                       }}
-                    ></Image>
+                    ></Image> */}
+                    <AsyncImage file={file} />
                     <Button
                       className="image-name"
                       style={{ flexGrow: 1, justifyContent: "flex-start" }}

@@ -63,7 +63,7 @@ function App() {
                 },
               ) => {
                 return (
-                  <div className="custom-item">
+                  <div className={`custom-item ${file.uid === modifyItem?.file.uid && 'active'}`}>
                     {/* <Image
                       width={48}
                       height={48}

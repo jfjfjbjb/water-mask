@@ -151,7 +151,7 @@ function App() {
                         <span>2024.6.3 星期一</span>
                         <span style={{ marginLeft: 16 }}>
                           <img
-                            width={24}
+                            width={Math.ceil(24 * scale)}
                             src={posUrl}
                             style={{ position: "relative", top: 6 }}
                           />
@@ -204,7 +204,7 @@ function App() {
                       onClick={() => {
                         snapdom.download(target.current, {
                           format: "jpg",
-                          filename: "my-capture.jpg",
+                          filename: `${modifyItem.file.name}_带水印.jpg`,
                         });
                       }}
                     >

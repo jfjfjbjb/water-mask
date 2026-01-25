@@ -1,6 +1,21 @@
 import { useRef, useState } from "react";
-import { DeleteOutlined, InboxOutlined } from "@ant-design/icons";
-import { Col, Row, Upload, Image, Button, Empty, Space, Select } from "antd";
+import {
+  DeleteOutlined,
+  InboxOutlined,
+  DownloadOutlined,
+} from "@ant-design/icons";
+import {
+  Col,
+  Row,
+  Upload,
+  Image,
+  Button,
+  Empty,
+  Space,
+  Select,
+  Slider,
+  ConfigProvider,
+} from "antd";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { snapdom } from "@zumer/snapdom";
 import posUrl from "./assets/pos.svg";
@@ -11,20 +26,12 @@ const { Dragger } = Upload;
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
 function App() {
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  // const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [modifyItem, setModifyItem] = useState();
   const [scale, setScale] = useState(1);
   const target = useRef(null);
 
   const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
-    setFileList(
-      [...newFileList].map((file) => {
-        return {
-          ...file,
-          url: URL.createObjectURL(file.originFileObj as FileType),
-        };
-      }),
-    );
     console.log(newFileList);
   };
 
@@ -42,7 +49,7 @@ function App() {
               name="file"
               multiple={true}
               // listType="picture"
-              fileList={fileList}
+              // fileList={fileList}
               onChange={handleChange}
               beforeUpload={() => false}
               itemRender={(
@@ -61,7 +68,7 @@ function App() {
                       width={48}
                       height={48}
                       styles={{ image: { borderRadius: "4px" } }}
-                      src={file.url}
+                      src={URL.createObjectURL(file.originFileObj as FileType)}
                       // 关键：控制图片自身适应方式
                       style={{
                         width: "100%",
@@ -76,7 +83,12 @@ function App() {
                       color="default"
                       variant="link"
                       onClick={() => {
-                        setModifyItem({ file });
+                        setModifyItem({
+                          file,
+                          url: URL.createObjectURL(
+                            file.originFileObj as FileType,
+                          ),
+                        });
                         setScale(1);
                       }}
                     >
@@ -101,7 +113,7 @@ function App() {
             </Dragger>
           </Image.PreviewGroup>
         </Col>
-        <Col span={16}>
+        <Col span={16} style={{ borderLeft: "1px solid #e8e8e8" }}>
           <>
             {modifyItem ? (
               <div className="modify-wrapper">
@@ -111,7 +123,7 @@ function App() {
                       maxWidth: "100%",
                       maxHeight: "calc(100vh - 64px)",
                     }}
-                    src={modifyItem.file.url}
+                    src={modifyItem.url}
                   ></img>
                   <div className="water-mask" contentEditable>
                     <div
@@ -160,24 +172,34 @@ function App() {
                   </div>
                 </div>
                 <div className="toolbar">
+                  <Slider
+                    value={scale}
+                    min={0.2}
+                    max={2.5}
+                    step={0.1}
+                    onChange={(val) => {
+                      setScale(val);
+                    }}
+                  />
                   <Space>
-                    <Select
+                    {/* <Select
                       value={scale}
                       prefix={"字体比例："}
                       style={{ width: 150 }}
                       options={Array.from({ length: 16 }, (_, i) => {
                         const x = (0.5 + i * 0.1).toFixed(1);
                         return {
-                          value: x,
+                          value: parseFloat(x),
                           label: `${x}倍`,
                         };
                       })}
                       onChange={(val) => {
                         setScale(val);
                       }}
-                    />
+                    /> */}
                     <Button
                       type="primary"
+                      icon={<DownloadOutlined />}
                       onClick={() => {
                         snapdom.download(target.current, {
                           format: "jpg",
@@ -193,7 +215,7 @@ function App() {
             ) : (
               <Empty
                 image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-                description="未选中"
+                description="未选中，请选择文件后点击文件名"
               />
             )}
           </>

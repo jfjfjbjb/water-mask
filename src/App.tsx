@@ -10,7 +10,7 @@ import { Col, Row, Upload, Image, Button, Empty, Slider } from "antd";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { snapdom } from "@zumer/snapdom";
 import AsyncImage from "./components/AsyncImage/Index";
-import posUrl from "./assets/pos.svg";
+import ModifyItem from "./components/ModifyItem/Index";
 import "./App.less";
 
 const { Dragger } = Upload;
@@ -164,7 +164,9 @@ function App() {
               </div>
               <div>
                 <h2 className="section-title">预览编辑</h2>
-                <p className="section-description">调整水印大小，点击修改文字</p>
+                <p className="section-description">
+                  调整水印大小，点击修改文字
+                </p>
               </div>
             </div>
             {/* 当有选中的图片时才显示工具栏 */}
@@ -215,94 +217,17 @@ function App() {
              * - 无选中图片时：显示空状态提示
              */}
             {modifyItem ? (
-              <div className="modify-wrapper">
-              {/*
-               * 图片编辑容器
-               * ref: 用于引用该DOM元素，以便进行截图下载
-               */}
-              <div className="modify-img-wrapper" ref={target}>
-                {/* 原图展示 */}
-                <img
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "calc(100vh - 200px)",
-                  }}
-                  src={modifyItem.url}
-                ></img>
-                {/*
-                 * 水印组件 (water-mask)
-                 * contentEditable: 允许用户编辑水印内容
-                 * 包含：
-                 * 1. 时间显示区域（时间和日期）
-                 * 2. 位置信息（地点图标和地址）
-                 * 3. 水印标识（水印相机文字）
-                 */}
-                <div className="water-mask" contentEditable>
-                  {/*
-                   * 时间显示区域
-                   * 包含：
-                   * - 大字体时间（16:43）
-                   * - 日期和星期
-                   * - 位置信息（图标+地址）
-                   * 所有元素的大小都随scale缩放
-                   */}
-                  <div
-                    style={{
-                      textAlign: "center",
-                      position: "absolute",
-                      bottom: "5em",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: Math.ceil(80 * scale),
-                        fontWeight: 300,
-                      }}
-                    >
-                      16:43
-                    </div>
-                    <div
-                      style={{
-                        fontSize: Math.ceil(20 * scale),
-                        color: "#eaeaea",
-                      }}
-                    >
-                      <span>2024.6.3 星期一</span>
-                      <span style={{ marginLeft: 16 }}>
-                        <img
-                          width={Math.ceil(24 * scale)}
-                          src={posUrl}
-                          style={{ position: "relative", top: 6 }}
-                        />
-                        贵阳市南明区万象城
-                      </span>
-                    </div>
-                  </div>
-                  {/*
-                   * 水印标识
-                   * 显示在图片右下角，表示水印来源
-                   * 透明度较低，不影响图片主体
-                   */}
-                  <div
-                    style={{
-                      fontSize: Math.ceil(16 * scale),
-                      opacity: 0.65,
-                      position: "absolute",
-                      bottom: 12,
-                      right: 12,
-                    }}
-                  >
-                    水印相机
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Empty
-              image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-              description="请选择左侧文件开始编辑"
-            />
-          )}
+              <ModifyItem
+                url={modifyItem.url}
+                scale={scale}
+                ref={target}
+              />
+            ) : (
+              <Empty
+                image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                description="请选择左侧文件开始编辑"
+              />
+            )}
           </div>
         </Col>
       </Row>

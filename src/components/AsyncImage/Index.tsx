@@ -1,13 +1,20 @@
-import { Image } from "antd";
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { Image, type UploadFile } from "antd";
+import { useDeferredValue, useEffect, useState } from "react";
 
 // 在组件中使用
-const AsyncImage = ({ file }) => {
+interface AsyncImageProps {
+  file: UploadFile;
+}
+
+const AsyncImage: React.FC<AsyncImageProps> = ({ file }) => {
   const [src, setSrc] = useState<string>("");
   // const [isPending, startTransition] = useTransition();
   const deferredSrc = useDeferredValue(src);
 
   useEffect(() => {
+    if (!file.originFileObj) {
+      return;
+    }
     const reader = new FileReader();
     reader.readAsDataURL(file.originFileObj);
     reader.onload = () => {

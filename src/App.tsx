@@ -1,20 +1,18 @@
 import { useRef, useState } from "react";
 import {
   DeleteOutlined,
-  InboxOutlined,
   DownloadOutlined,
   PictureOutlined,
   ZoomInOutlined,
   CameraOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
-import { Upload, Empty, Image } from "antd";
-import type { UploadFile, UploadProps } from "antd";
+import { Empty, Image } from "antd";
+import type { UploadFile } from "antd";
 import { snapdom } from "@zumer/snapdom";
 import AsyncImage from "./components/AsyncImage/Index";
 import ModifyItem from "./components/ModifyItem/Index";
 import "./App.less";
-
-const { Dragger } = Upload;
 
 interface WatermarkData {
   time: string;
@@ -39,25 +37,100 @@ function App() {
   const [modifyItem, setModifyItem] = useState<ModifyItemData | undefined>();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [scale, setScale] = useState<number>(1);
-  const [watermarkCache, setWatermarkCache] = useState<Record<string, WatermarkData>>({});
-  const [currentWatermark, setCurrentWatermark] = useState<WatermarkData>(defaultWatermark);
+  const [watermarkCache, setWatermarkCache] = useState<
+    Record<string, WatermarkData>
+  >({});
+  const [currentWatermark, setCurrentWatermark] =
+    useState<WatermarkData>(defaultWatermark);
+  const [objectUrlCache, setObjectUrlCache] = useState<Record<string, string>>(
+    {},
+  );
   const target = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
-    setFileList(newFileList);
-    // 第一次上传文件时，自动选中第一项
-    if (newFileList.length > 0 && !modifyItem) {
-      const firstFile = newFileList[0];
-      const uid = firstFile.uid;
-      setModifyItem({
-        file: firstFile,
-        url: URL.createObjectURL(firstFile.originFileObj as File),
+  // 使用 requestIdleCallback 分批创建 objectURL，避免大量文件同时上传时阻塞主线程
+  const processFilesInBatches = (files: UploadFile[]) => {
+    const BATCH_SIZE = 5; // 每批处理 5 个文件
+    let index = 0;
+
+    const processBatch = (deadline: IdleDeadline) => {
+      let processed = 0;
+      while (
+        index < files.length &&
+        processed < BATCH_SIZE &&
+        deadline.timeRemaining() > 0
+      ) {
+        const file = files[index];
+        const uid = file.uid;
+        // 如果缓存中没有，则创建 objectURL
+        if (!objectUrlCache[uid] && file.originFileObj) {
+          const url = URL.createObjectURL(file.originFileObj as File);
+          setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
+        }
+        index++;
+        processed++;
+      }
+
+      if (index < files.length) {
+        requestIdleCallback(processBatch, { timeout: 100 });
+      }
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      requestIdleCallback(processBatch, { timeout: 100 });
+    } else {
+      // 降级：直接处理所有文件
+      files.forEach((file) => {
+        const uid = file.uid;
+        if (!objectUrlCache[uid] && file.originFileObj) {
+          const url = URL.createObjectURL(file.originFileObj as File);
+          setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
+        }
       });
-      // 初始化缓存
-      if (!watermarkCache[uid]) {
-        setWatermarkCache((prev) => ({ ...prev, [uid]: { ...currentWatermark } }));
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files).map((file) => ({
+      uid: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      originFileObj: file,
+      name: file.name,
+      size: file.size,
+      status: "done" as const,
+    }));
+
+    setFileList(newFiles);
+
+    // 分批处理 objectURL
+    if (newFiles.length > 0) {
+      processFilesInBatches(newFiles);
+    }
+
+    // 自动选中第一项
+    if (!modifyItem && newFiles.length > 0) {
+      const firstFile = newFiles[0];
+      const uid = firstFile.uid;
+      if (firstFile.originFileObj) {
+        const url = URL.createObjectURL(firstFile.originFileObj);
+        setModifyItem({
+          file: firstFile,
+          url,
+        });
+        setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
+        if (!watermarkCache[uid]) {
+          setWatermarkCache((prev) => ({
+            ...prev,
+            [uid]: { ...currentWatermark },
+          }));
+        }
       }
     }
+
+    // 重置 input value 以允许再次选择相同文件
+    e.target.value = "";
   };
 
   const handleWatermarkChange = (newWatermark: WatermarkData) => {
@@ -69,14 +142,23 @@ function App() {
 
   const handleSelectFile = (file: UploadFile) => {
     const uid = file.uid;
+    // 优先从缓存读取，否则立即创建一个
+    let url = objectUrlCache[uid];
+    if (!url && file.originFileObj) {
+      url = URL.createObjectURL(file.originFileObj as File);
+      setObjectUrlCache((prev) => ({ ...prev, [uid]: url! }));
+    }
     setModifyItem({
       file,
-      url: URL.createObjectURL(file.originFileObj as File),
+      url: url || "",
     });
     setScale(1);
     // 如果缓存中有用缓存，没有则用当前值
     if (!watermarkCache[uid]) {
-      setWatermarkCache((prev) => ({ ...prev, [uid]: { ...currentWatermark } }));
+      setWatermarkCache((prev) => ({
+        ...prev,
+        [uid]: { ...currentWatermark },
+      }));
     }
   };
 
@@ -106,23 +188,24 @@ function App() {
             </div>
           </div>
 
-          <Dragger
-            name="file"
-            multiple
+          <input
+            ref={fileInputRef}
+            type="file"
             accept="image/*"
-            fileList={fileList}
-            onChange={handleChange}
-            beforeUpload={() => false}
-            showUploadList={false}
+            multiple
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+          <div
+            className="upload-zone"
+            onClick={() => fileInputRef.current?.click()}
           >
-            <div className="upload-zone">
-              <div className="upload-zone-icon">
-                <InboxOutlined />
-              </div>
-              <span className="upload-zone-text">点击或拖动文件到此区域</span>
-              <span className="upload-zone-hint">支持多个文件上传</span>
+            <div className="upload-zone-icon">
+              <UploadOutlined />
             </div>
-          </Dragger>
+            <span className="upload-zone-text">点击或拖动文件到此区域</span>
+            <span className="upload-zone-hint">支持多个文件上传</span>
+          </div>
 
           <div className="file-list">
             <Image.PreviewGroup
@@ -139,20 +222,36 @@ function App() {
                     className={`file-item ${isActive ? "active" : ""}`}
                     onClick={() => handleSelectFile(file)}
                   >
-                    <AsyncImage file={file} />
+                    <AsyncImage
+                      file={file}
+                      objectUrl={objectUrlCache[file.uid]}
+                    />
                     <div className="file-info">
                       <div className="file-name">{file.name}</div>
-                      <div className="file-meta">{((file.size || 0) / 1024 / 1024).toFixed(2)} MB</div>
+                      <div className="file-meta">
+                        {((file.size || 0) / 1024 / 1024).toFixed(2)} MB
+                      </div>
                     </div>
                     <button
                       className="file-delete"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const newList = fileList.filter(
-                          (f) => f.uid !== file.uid,
-                        );
+                        const uid = file.uid;
+                        const newList = fileList.filter((f) => f.uid !== uid);
                         setFileList(newList);
-                        if (modifyItem?.file.uid === file.uid) {
+                        // 释放被删除文件的 objectURL 并清理缓存
+                        if (objectUrlCache[uid]) {
+                          URL.revokeObjectURL(objectUrlCache[uid]);
+                          setObjectUrlCache((prev) => {
+                            const next = { ...prev };
+                            delete next[uid];
+                            return next;
+                          });
+                        }
+                        if (modifyItem?.file.uid === uid) {
+                          if (modifyItem.url) {
+                            URL.revokeObjectURL(modifyItem.url);
+                          }
                           setModifyItem(undefined);
                         }
                       }}
@@ -220,7 +319,9 @@ function App() {
               <ModifyItem
                 url={modifyItem.url}
                 scale={scale}
-                watermark={watermarkCache[modifyItem.file.uid] || defaultWatermark}
+                watermark={
+                  watermarkCache[modifyItem.file.uid] || defaultWatermark
+                }
                 onWatermarkChange={handleWatermarkChange}
                 ref={target}
               />

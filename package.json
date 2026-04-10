@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@types/nprogress": "^0.2.3",
     "@zumer/snapdom": "^2.0.2",
     "antd": "^6.2.1",
+    "nprogress": "^0.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -1,228 +1,350 @@
 import { useRef, useState } from "react";
 import {
   DeleteOutlined,
-  InboxOutlined,
   DownloadOutlined,
+  PictureOutlined,
+  ZoomInOutlined,
+  CameraOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
-import {
-  Col,
-  Row,
-  Upload,
-  Image,
-  Button,
-  Empty,
-  Space,
-  Select,
-  Slider,
-  ConfigProvider,
-} from "antd";
-import type { GetProp, UploadFile, UploadProps } from "antd";
+import { Empty, Image } from "antd";
+import type { UploadFile } from "antd";
 import { snapdom } from "@zumer/snapdom";
 import AsyncImage from "./components/AsyncImage/Index";
-import posUrl from "./assets/pos.svg";
-import "./App.css";
+import ModifyItem from "./components/ModifyItem/Index";
+import "./App.less";
 
-const { Dragger } = Upload;
+interface WatermarkData {
+  time: string;
+  date: string;
+  location: string;
+  brand: string;
+}
 
-type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
+interface ModifyItemData {
+  file: UploadFile;
+  url: string;
+}
+
+const defaultWatermark: WatermarkData = {
+  time: "16:43",
+  date: "2024.6.3 星期一",
+  location: "贵阳市南明区万象城",
+  brand: "水印相机",
+};
+
 function App() {
-  // const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [modifyItem, setModifyItem] = useState();
-  const [scale, setScale] = useState(1);
-  const target = useRef(null);
+  const [modifyItem, setModifyItem] = useState<ModifyItemData | undefined>();
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [scale, setScale] = useState<number>(1);
+  const [watermarkCache, setWatermarkCache] = useState<
+    Record<string, WatermarkData>
+  >({});
+  const [currentWatermark, setCurrentWatermark] =
+    useState<WatermarkData>(defaultWatermark);
+  const [objectUrlCache, setObjectUrlCache] = useState<Record<string, string>>(
+    {},
+  );
+  const [modifiedWatermarkUids, setModifiedWatermarkUids] = useState<Set<string>>(
+    new Set(),
+  );
+  const target = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
-    // console.log(newFileList);
+  // 使用 requestIdleCallback 分批创建 objectURL，避免大量文件同时上传时阻塞主线程
+  const processFilesInBatches = (files: UploadFile[]) => {
+    const BATCH_SIZE = 5; // 每批处理 5 个文件
+    let index = 0;
+
+    const processBatch = (deadline: IdleDeadline) => {
+      let processed = 0;
+      while (
+        index < files.length &&
+        processed < BATCH_SIZE &&
+        deadline.timeRemaining() > 0
+      ) {
+        const file = files[index];
+        const uid = file.uid;
+        // 如果缓存中没有，则创建 objectURL
+        if (!objectUrlCache[uid] && file.originFileObj) {
+          const url = URL.createObjectURL(file.originFileObj as File);
+          setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
+        }
+        index++;
+        processed++;
+      }
+
+      if (index < files.length) {
+        requestIdleCallback(processBatch, { timeout: 100 });
+      }
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      requestIdleCallback(processBatch, { timeout: 100 });
+    } else {
+      // 降级：直接处理所有文件
+      files.forEach((file) => {
+        const uid = file.uid;
+        if (!objectUrlCache[uid] && file.originFileObj) {
+          const url = URL.createObjectURL(file.originFileObj as File);
+          setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
+        }
+      });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files).map((file) => ({
+      uid: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      originFileObj: file,
+      name: file.name,
+      size: file.size,
+      status: "done" as const,
+    }));
+
+    setFileList((prev) => [...prev, ...newFiles] as unknown as UploadFile[]);
+
+    // 分批处理 objectURL
+    if (newFiles.length > 0) {
+      processFilesInBatches(newFiles as unknown as UploadFile[]);
+    }
+
+    // 自动选中第一项
+    if (!modifyItem && newFiles.length > 0) {
+      const firstFile = newFiles[0];
+      const uid = firstFile.uid;
+      if (firstFile.originFileObj) {
+        const url = URL.createObjectURL(firstFile.originFileObj);
+        setModifyItem({
+          file: firstFile as unknown as UploadFile,
+          url,
+        });
+        setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
+        if (!watermarkCache[uid]) {
+          setWatermarkCache((prev) => ({
+            ...prev,
+            [uid]: { ...currentWatermark },
+          }));
+        }
+      }
+    }
+
+    // 重置 input value 以允许再次选择相同文件
+    e.target.value = "";
+  };
+
+  const handleWatermarkChange = (newWatermark: WatermarkData) => {
+    if (!modifyItem) return;
+    const uid = modifyItem.file.uid;
+    // 更新当前项水印，并标记为已修改
+    setWatermarkCache((prev) => ({ ...prev, [uid]: newWatermark }));
+    setModifiedWatermarkUids((prev) => new Set(prev).add(uid));
+    setCurrentWatermark(newWatermark); // 更新当前值，后续新建图片使用此值
+  };
+
+  const handleSelectFile = (file: UploadFile) => {
+    const uid = file.uid;
+    // 优先从缓存读取，否则立即创建一个
+    let url = objectUrlCache[uid];
+    if (!url && file.originFileObj) {
+      url = URL.createObjectURL(file.originFileObj as File);
+      setObjectUrlCache((prev) => ({ ...prev, [uid]: url! }));
+    }
+    setModifyItem({
+      file,
+      url: url || "",
+    });
+    setScale(1);
+    // 如果缓存中有用缓存，没有则用当前值
+    if (!watermarkCache[uid]) {
+      setWatermarkCache((prev) => ({
+        ...prev,
+        [uid]: { ...currentWatermark },
+      }));
+    }
   };
 
   return (
-    <>
-      <Row style={{ height: "100%", padding: "10px" }} gutter={16}>
-        <Col span={8} style={{ overflow: "auto" }}>
-          <Image.PreviewGroup
-            preview={{
-              onChange: (current, prev) =>
-                console.log(`current index: ${current}, prev index: ${prev}`),
-            }}
+    <div className="app-container">
+      {/* Header */}
+      <header className="header">
+        <div className="header-brand">
+          <div className="header-logo">
+            <CameraOutlined />
+          </div>
+          <span className="header-title">水印magic</span>
+        </div>
+      </header>
+
+      {/* Main */}
+      <div className="main-row">
+        {/* Upload Column */}
+        <div className="upload-column">
+          <div className="section-header">
+            <div className="section-icon">
+              <PictureOutlined />
+            </div>
+            <div className="section-text">
+              <h2>图片上传</h2>
+              <p>上传并管理您的图片文件</p>
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+          <div
+            className="upload-zone"
+            onClick={() => fileInputRef.current?.click()}
           >
-            <Dragger
-              name="file"
-              multiple={true}
-              // listType="picture"
-              // fileList={fileList}
-              onChange={handleChange}
-              beforeUpload={() => false}
-              itemRender={(
-                originNode: ReactElement,
-                file: UploadFile,
-                fileList: object[],
-                actions: {
-                  download: function;
-                  preview: function;
-                  remove: function;
-                },
-              ) => {
-                return (
-                  <div className={`custom-item ${file.uid === modifyItem?.file.uid && 'active'}`}>
-                    {/* <Image
-                      width={48}
-                      height={48}
-                      styles={{ image: { borderRadius: "4px" } }}
-                      // src={URL.createObjectURL(file.originFileObj as FileType)}
-                      // 关键：控制图片自身适应方式
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain", // 或 'cover'，见下方解释
-                        display: "block", // 避免flex容器内的间隙问题
-                      }}
-                    ></Image> */}
-                    <AsyncImage file={file} />
-                    <Button
-                      className="image-name"
-                      style={{ flexGrow: 1, justifyContent: "flex-start" }}
-                      color="default"
-                      variant="link"
-                      onClick={() => {
-                        setModifyItem({
-                          file,
-                          url: URL.createObjectURL(
-                            file.originFileObj as FileType,
-                          ),
-                        });
-                        setScale(1);
-                      }}
-                    >
-                      {file.name}
-                    </Button>
-                    <Button
-                      type="text"
-                      icon={<DeleteOutlined style={{ color: "#a8a8a8" }} />}
-                      onClick={() => {
-                        actions.remove();
-                      }}
-                    />
-                  </div>
-                );
+            <div className="upload-zone-icon">
+              <UploadOutlined />
+            </div>
+            <span className="upload-zone-text">点击或拖动文件到此区域</span>
+            <span className="upload-zone-hint">支持多个文件上传</span>
+          </div>
+
+          <div className="file-list">
+            <Image.PreviewGroup
+              preview={{
+                onChange: (current, prev) =>
+                  console.log(`current index: ${current}, prev index: ${prev}`),
               }}
             >
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">点击或拖动文件到此区域进行上传</p>
-              <p className="ant-upload-hint">支持多个文件上传</p>
-            </Dragger>
-          </Image.PreviewGroup>
-        </Col>
-        <Col span={16} style={{ borderLeft: "1px solid #e8e8e8" }}>
-          <>
-            {modifyItem ? (
-              <div className="modify-wrapper">
-                <div className="modify-img-wrapper" ref={target}>
-                  <img
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "calc(100vh - 64px)",
-                    }}
-                    src={modifyItem.url}
-                  ></img>
-                  <div className="water-mask" contentEditable>
-                    <div
-                      style={{
-                        textAlign: "center",
-                        position: "absolute",
-                        bottom: "5em",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: Math.ceil(80 * scale),
-                          fontWeight: 300,
-                        }}
-                      >
-                        16:43
-                      </div>
-                      <div
-                        style={{
-                          fontSize: Math.ceil(20 * scale),
-                          color: "#eaeaea",
-                        }}
-                      >
-                        <span>2024.6.3 星期一</span>
-                        <span style={{ marginLeft: 16 }}>
-                          <img
-                            width={Math.ceil(24 * scale)}
-                            src={posUrl}
-                            style={{ position: "relative", top: 6 }}
-                          />
-                          贵阳市南明区万象城
-                        </span>
+              {fileList.map((file) => {
+                const isActive = modifyItem?.file.uid === file.uid;
+                return (
+                  <div
+                    key={file.uid}
+                    className={`file-item ${isActive ? "active" : ""}`}
+                    onClick={() => handleSelectFile(file)}
+                  >
+                    <AsyncImage
+                      file={file}
+                      objectUrl={objectUrlCache[file.uid]}
+                    />
+                    <div className="file-info">
+                      <div className="file-name">{file.name}</div>
+                      <div className="file-meta">
+                        {((file.size || 0) / 1024 / 1024).toFixed(2)} MB
                       </div>
                     </div>
-                    <div
-                      style={{
-                        fontSize: Math.ceil(16 * scale),
-                        opacity: 0.65,
-                        position: "absolute",
-                        bottom: 12,
-                        right: 12,
+                    <button
+                      className="file-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const uid = file.uid;
+                        const newList = fileList.filter((f) => f.uid !== uid);
+                        setFileList(newList);
+                        // 释放被删除文件的 objectURL 并清理缓存
+                        if (objectUrlCache[uid]) {
+                          URL.revokeObjectURL(objectUrlCache[uid]);
+                          setObjectUrlCache((prev) => {
+                            const next = { ...prev };
+                            delete next[uid];
+                            return next;
+                          });
+                        }
+                        if (modifyItem?.file.uid === uid) {
+                          if (modifyItem.url) {
+                            URL.revokeObjectURL(modifyItem.url);
+                          }
+                          setModifyItem(undefined);
+                        }
                       }}
                     >
-                      水印相机
-                    </div>
+                      <DeleteOutlined />
+                    </button>
                   </div>
-                </div>
-                <div className="toolbar">
-                  <Slider
-                    value={scale}
-                    min={0.2}
-                    max={2.5}
-                    step={0.1}
-                    onChange={(val) => {
-                      setScale(val);
-                    }}
-                  />
-                  <Space>
-                    {/* <Select
-                      value={scale}
-                      prefix={"字体比例："}
-                      style={{ width: 150 }}
-                      options={Array.from({ length: 16 }, (_, i) => {
-                        const x = (0.5 + i * 0.1).toFixed(1);
-                        return {
-                          value: parseFloat(x),
-                          label: `${x}倍`,
-                        };
-                      })}
-                      onChange={(val) => {
-                        setScale(val);
-                      }}
-                    /> */}
-                    <Button
-                      type="primary"
-                      icon={<DownloadOutlined />}
-                      onClick={() => {
-                        snapdom.download(target.current, {
-                          format: "jpg",
-                          filename: `${modifyItem.file.name}_带水印.jpg`,
-                        });
-                      }}
-                    >
-                      下载
-                    </Button>
-                  </Space>
-                </div>
+                );
+              })}
+            </Image.PreviewGroup>
+          </div>
+        </div>
+
+        {/* Preview Column */}
+        <div className="preview-column">
+          <div className="section-header">
+            <div className="section-icon">
+              <ZoomInOutlined />
+            </div>
+            <div className="section-text">
+              <h2>预览编辑</h2>
+              <p>调整水印大小，点击修改文字</p>
+            </div>
+          </div>
+
+          {modifyItem && (
+            <div className="preview-toolbar">
+              <div className="slider-container">
+                <span className="slider-label">缩放</span>
+                <input
+                  type="range"
+                  className="slider"
+                  min="0.2"
+                  max="2.5"
+                  step="0.1"
+                  value={scale}
+                  onChange={(e) => setScale(parseFloat(e.target.value))}
+                />
+                <span className="slider-value">{scale.toFixed(1)}x</span>
               </div>
-            ) : (
-              <Empty
-                image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-                description="未选中，请选择文件后点击文件名"
+              <button
+                className="download-btn"
+                onClick={() => {
+                  snapdom.download(target.current as HTMLElement, {
+                    filename: `${modifyItem.file.name}_带水印.jpg`,
+                  });
+                }}
+              >
+                <DownloadOutlined />
+                下载
+              </button>
+            </div>
+          )}
+
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 0,
+            }}
+          >
+            {modifyItem ? (
+              <ModifyItem
+                url={modifyItem.url}
+                scale={scale}
+                watermark={
+                  modifiedWatermarkUids.has(modifyItem.file.uid)
+                    ? watermarkCache[modifyItem.file.uid]
+                    : currentWatermark
+                }
+                onWatermarkChange={handleWatermarkChange}
+                ref={target}
               />
+            ) : (
+              <div className="preview-empty">
+                <Empty
+                  // image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                  styles={{ image: { height: 60 } }}
+                  description={false}
+                ></Empty>
+              </div>
             )}
-          </>
-        </Col>
-      </Row>
-    </>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

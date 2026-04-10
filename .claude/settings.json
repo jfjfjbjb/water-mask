@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__new_page",
+      "Read(//c/Users/69745/AppData/Local/Temp/chrome-devtools-mcp-DNtyy6/**)",
+      "mcp__chrome-devtools__close_page",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s http://localhost:5173/src/App.less)",
+      "Read(//dev/d/workspace/water-mask/src/**)",
+      "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
+    ]
+  },
+  "plansDirectory": "plans"
+}

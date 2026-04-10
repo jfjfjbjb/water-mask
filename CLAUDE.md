@@ -40,3 +40,12 @@ npm run preview  # Preview production build
 - Ant Design 6 for UI components
 - Less for styling
 - ESLint with typescript-eslint
+
+## 右侧preview区域
+右侧preview区域有特殊处理，图片设置了属性
+```less
+max-height: calc(-200px + 100vh);
+```
+确保图片撑满高度，且图片能保持原始比例，水印遮罩能覆盖图片
+- **这部分不允许改动基本结构和逻辑**
+- **如果整体页面样式有改动，只需修改max-height属性即可**

@@ -1,393 +1,576 @@
 /*
- * 应用主样式文件
- * 包含水印相机的整体布局和组件样式
- * 使用 Less 嵌套语法组织样式层级
+ * CSS Variables - Design Tokens
  */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-elevated: #fafafa;
+  --border-light: #e5e5e5;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --accent: #2563eb;
+  --accent-light: rgba(37, 99, 235, 0.06);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
 
 /*
  * 容器样式
- * 整个应用的顶层容器，设置最小高度和渐变背景
  */
 .app-container {
-  height: 100%;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: 24px;
-
-  /*
-   * 响应式行布局
-   * 最大宽度限制为 1600px，居中显示
-   */
-  .ant-row {
-    width: 100%;
-    max-width: 1600px;
-    margin: 0 auto;
-    min-height: calc(100vh - 48px);
-    background: #ffffff;
-    box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-
-    /*
-     * 列基础样式
-     * 相对定位，高度100%，溢出隐藏
-     */
-    .ant-col {
-      position: relative;
-      height: 100%;
-      overflow: hidden;
-    }
-  }
-}
-
-/*
- * 上传列样式
- * 左侧文件上传区域的样式
- */
-.upload-column {
-  padding: 20px;
-  border-right: 1px solid #e2e8f0;
-  background: #ffffff;
-  height: calc(100vh - 48px);
-  box-sizing: border-box;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-y: hidden;
-
-  /*
-   * 上传区域滚动容器
-   * 自适应填充剩余空间，支持垂直滚动
-   */
-  .upload-scroll-wrapper {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-right: 4px;
-
-    /*
-     * 自定义滚动条样式
-     * 适配 Webkit 内核浏览器（Chrome, Safari, Edge 等）
-     */
-    &::-webkit-scrollbar {
-      width: 8px;
-
-      /*
-       * 滚动条轨道背景色
-       */
-      &-track {
-        background: #f8fafc;
-      }
-
-      /*
-       * 滚动条滑块样式
-       * 浅灰色背景，圆角设计
-       */
-      &-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-
-        /*
-         * 滑块悬停状态
-         * 颜色变深，提供交互反馈
-         */
-        &:hover {
-          background: #94a3b8;
-        }
-      }
-    }
-  }
 }
 
-/*
- * 预览列样式
- * 右侧图片预览和水印编辑区域的样式
- */
-.preview-column {
-  padding: 20px;
-  background: #ffffff;
+/* Header */
+.header {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #3a3a3a 0%, #1a1a1a 100%);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
-  height: calc(100vh - 48px);
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 
-  /*
-   * 预览内容区域
-   * 自适应填充剩余空间
-   */
-  .preview-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+    border-radius: 9px 9px 0 0;
+  }
 
-    /*
-     * 空状态样式
-     * 居中显示空状态提示
-     */
-    .ant-empty {
-      flex-grow: 1;
-    }
+  .anticon {
+    position: relative;
+    z-index: 1;
+    color: white;
+    font-size: 18px;
   }
 }
 
-/*
- * 区块头部样式
- * 包含标题图标和文字描述
- */
+.header-title {
+  font-size: 20px;
+  font-weight: 500;
+  font-family: Palatino, "Palatino Linotype", Georgia, serif;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+/* Main */
+.main-row {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1px;
+  background: var(--border-light);
+  min-height: 0;
+}
+
+/* Section Header */
 .section-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  flex-shrink: 0;
-
-  /*
-   * 头部左侧区域
-   * 标题和描述的容器
-   */
-  &-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-  }
-
-  /*
-   * 头部右侧区域
-   * 用于工具栏和操作按钮
-   */
-  &-right {
-    flex-grow: 1;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-  }
-
-  /*
-   * 区块图标样式
-   * 绿色/橙色渐变背景，白色图标
-   */
-  .section-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-
-    /*
-     * 图标颜色
-     */
-    .anticon {
-      font-size: 20px;
-      color: white;
-    }
-  }
-
-  /*
-   * 预览区域专用图标样式
-   * 使用橙色渐变区分
-   */
-  &.preview-section-header .section-icon {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  }
+  gap: 10px;
 }
 
-/*
- * 标题样式
- */
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-/*
- * 描述文字样式
- */
-.section-description {
-  font-size: 13px;
-  color: #64748b;
-  margin: 2px 0 0 0;
-}
-
-/*
- * 工具栏样式
- * 包含缩放滑块和下载按钮的容器
- */
-.toolbar-inline {
+.section-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 6px 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
 
-  /*
-   * 滑块样式
-   * 减小默认间距，调整宽度
-   */
-  .ant-slider {
-    margin: 0;
-    width: 150px;
+  .anticon {
+    font-size: 16px;
+    color: var(--text-secondary);
   }
 }
 
-/*
- * 上传组件容器
- */
-.ant-upload-wrapper {
-  display: block;
-  flex-shrink: 0;
-  margin-bottom: 16px;
-}
-
-/*
- * 拖拽上传区域样式
- */
-.ant-upload-drag {
-  height: 200px;
+.section-text {
   display: flex;
   flex-direction: column;
+  gap: 1px;
 
-  /*
-   * 拖拽内容容器
-   * 垂直居中显示上传提示
-   */
-  &-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  p {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
   }
 }
 
-/*
- * 文件列表容器
- */
-.ant-upload-list {
-  flex-shrink: 0;
-  overflow-y: visible;
-  margin-top: 12px;
-  margin-bottom: 20px;
+/* Upload Column */
+.upload-column {
+  padding: 16px;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
 }
 
-/*
- * 自定义文件列表项样式
- * 每个上传文件项的展示样式
- */
-.custom-item {
+/* Upload Zone */
+.upload-zone {
+  height: 100px;
+  border: 1.5px dashed var(--border-light);
+  border-radius: 10px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  background-color: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  margin: 8px 0 0 0;
-  padding: 10px 12px;
-  min-height: 60px;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
 
-  /*
-   * 激活状态样式
-   * 当前选中文件的高亮效果
-   */
-  &.active {
-    background: linear-gradient(
-      135deg,
-      rgba(59, 130, 246, 0.08) 0%,
-      rgba(59, 130, 246, 0.12) 100%
-    );
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-  }
-
-  /*
-   * 悬停状态样式
-   * 提供视觉反馈
-   */
   &:hover {
-    background-color: #f8fafc;
-    border-color: #cbd5e1;
-    transform: translateX(2px);
-  }
-
-  /*
-   * 列表项中的图片预览
-   */
-  .ant-image {
-    flex-shrink: 0;
-    width: 48px;
-    height: 48px;
-  }
-
-  /*
-   * 文件名样式
-   * 超出部分省略号显示
-   */
-  .image-name {
-    display: inline;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex-grow: 1;
+    border-color: var(--accent);
   }
 }
 
-/*
- * 图片编辑容器样式
- * 用于包裹原图和水印的容器
- */
-.modify-wrapper {
-  position: relative;
+.upload-zone-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
   display: flex;
-  flex-grow: 1;
   align-items: center;
   justify-content: center;
 
-  /*
-   * 图片包装器
-   * 相对定位，作为水印的定位参照
-   */
-  .modify-img-wrapper {
-    position: relative;
-    display: inline-block;
-    max-width: 100%;
-    line-height: 0;
+  .anticon {
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+}
 
-    /*
-     * 原图样式
-     */
-    img {
-    }
+.upload-zone-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
 
-    /*
-     * 水印层样式
-     * 绝对定位覆盖在原图上
-     */
-    .water-mask {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      line-height: initial;
-      text-shadow: 1px 0px 4px rgba(0, 0, 0, 0.7);
+.upload-zone-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* File List */
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 2px;
+  }
+}
+
+/* Ant Design Upload Override */
+.ant-upload {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-upload-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 2px;
+  }
+}
+
+.ant-upload-list-item {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.ant-upload-drag {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+
+  &:hover,
+  &:focus,
+  &:focus-within,
+  &.ant-upload-drag-hovering {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  &-container {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+.ant-image {
+  border: none !important;
+  outline: none !important;
+
+  &-img {
+    border: none !important;
+    outline: none !important;
+  }
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: var(--accent-light);
+    border-color: rgba(37, 99, 235, 0.15);
+  }
+
+  &.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+  }
+}
+
+.file-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--border-light);
+  flex-shrink: 0;
+  overflow: hidden;
+
+  .ant-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+
+    &-img {
+      border-radius: 6px;
     }
+  }
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.file-delete {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(234, 67, 53, 0.08);
+    opacity: 1;
+  }
+
+  .anticon {
+    font-size: 13px;
+    color: #ea4335;
+  }
+}
+
+/* Preview Column */
+.preview-column {
+  padding: 16px;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.preview-empty {
+  align-self: self-start;
+  margin-top: 64px
+}
+
+/* Preview Toolbar */
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.slider-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.slider {
+  flex: 1;
+  max-width: 100px;
+  height: 3px;
+  -webkit-appearance: none;
+  background: var(--border-light);
+  border-radius: 2px;
+  outline: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+}
+
+.slider-value {
+  font-size: 10px;
+  color: var(--text-muted);
+  min-width: 28px;
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+
+  .anticon {
+    font-size: 13px;
+  }
+}
+
+/* Preview Area */
+.preview-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.image-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: calc(100vh - 200px);
+  // border-radius: 6px;
+  display: block;
+}
+
+.watermark-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.watermark-content {
+  position: absolute;
+  bottom: 4em;
+  text-align: center;
+}
+
+.watermark-time {
+  font-size: 52px;
+  font-weight: 300;
+  color: white;
+  text-shadow: 2px 0 5px rgba(0, 0, 0, 0.5), -2px 0 5px rgba(0, 0, 0, 0.5);
+  letter-spacing: -1px;
+}
+
+.watermark-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 1px 0 3px rgba(0, 0, 0, 0.4);
+}
+
+.watermark-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.watermark-brand {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 1px 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-row {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .upload-column {
+    min-height: 450px;
+    max-height: none;
+    border-bottom: 1px solid var(--border-light);
+    overflow-y: auto;
+  }
+
+  .file-list {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .preview-column {
+    min-height: 350px;
+    overflow: hidden;
+  }
+
+  .preview-area {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .preview-image {
+    max-height: 300px;
   }
 }

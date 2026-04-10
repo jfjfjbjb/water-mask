@@ -45,6 +45,9 @@ function App() {
   const [objectUrlCache, setObjectUrlCache] = useState<Record<string, string>>(
     {},
   );
+  const [modifiedWatermarkUids, setModifiedWatermarkUids] = useState<Set<string>>(
+    new Set(),
+  );
   const target = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,11 +105,11 @@ function App() {
       status: "done" as const,
     }));
 
-    setFileList(newFiles);
+    setFileList((prev) => [...prev, ...newFiles] as unknown as UploadFile[]);
 
     // 分批处理 objectURL
     if (newFiles.length > 0) {
-      processFilesInBatches(newFiles);
+      processFilesInBatches(newFiles as unknown as UploadFile[]);
     }
 
     // 自动选中第一项
@@ -116,7 +119,7 @@ function App() {
       if (firstFile.originFileObj) {
         const url = URL.createObjectURL(firstFile.originFileObj);
         setModifyItem({
-          file: firstFile,
+          file: firstFile as unknown as UploadFile,
           url,
         });
         setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
@@ -136,7 +139,9 @@ function App() {
   const handleWatermarkChange = (newWatermark: WatermarkData) => {
     if (!modifyItem) return;
     const uid = modifyItem.file.uid;
+    // 更新当前项水印，并标记为已修改
     setWatermarkCache((prev) => ({ ...prev, [uid]: newWatermark }));
+    setModifiedWatermarkUids((prev) => new Set(prev).add(uid));
     setCurrentWatermark(newWatermark); // 更新当前值，后续新建图片使用此值
   };
 
@@ -320,7 +325,9 @@ function App() {
                 url={modifyItem.url}
                 scale={scale}
                 watermark={
-                  watermarkCache[modifyItem.file.uid] || defaultWatermark
+                  modifiedWatermarkUids.has(modifyItem.file.uid)
+                    ? watermarkCache[modifyItem.file.uid]
+                    : currentWatermark
                 }
                 onWatermarkChange={handleWatermarkChange}
                 ref={target}

@@ -9,7 +9,8 @@
       "Bash(curl -s http://localhost:5173/src/App.less)",
       "Read(//dev/d/workspace/water-mask/src/**)",
       "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
     ]
   },
   "plansDirectory": "plans"

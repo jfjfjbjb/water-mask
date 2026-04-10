@@ -45,6 +45,7 @@ const AsyncImage: React.FC<AsyncImageProps> = ({ file }) => {
         objectFit: "contain", // 或 'cover'，见下方解释
         display: "block", // 避免flex容器内的间隙问题
       }}
+      onClick={(e) => e.stopPropagation()}
     ></Image>
   );
 };

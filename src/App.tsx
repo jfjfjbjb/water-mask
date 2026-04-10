@@ -7,7 +7,7 @@ import {
   ZoomInOutlined,
   CameraOutlined,
 } from "@ant-design/icons";
-import { Upload, Empty } from "antd";
+import { Upload, Empty, Image } from "antd";
 import type { UploadFile, UploadProps } from "antd";
 import { snapdom } from "@zumer/snapdom";
 import AsyncImage from "./components/AsyncImage/Index";
@@ -16,15 +16,31 @@ import "./App.less";
 
 const { Dragger } = Upload;
 
+interface WatermarkData {
+  time: string;
+  date: string;
+  location: string;
+  brand: string;
+}
+
 interface ModifyItemData {
   file: UploadFile;
   url: string;
 }
 
+const defaultWatermark: WatermarkData = {
+  time: "16:43",
+  date: "2024.6.3 星期一",
+  location: "贵阳市南明区万象城",
+  brand: "水印相机",
+};
+
 function App() {
   const [modifyItem, setModifyItem] = useState<ModifyItemData | undefined>();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [scale, setScale] = useState<number>(1);
+  const [watermarkCache, setWatermarkCache] = useState<Record<string, WatermarkData>>({});
+  const [currentWatermark, setCurrentWatermark] = useState<WatermarkData>(defaultWatermark);
   const target = useRef<HTMLDivElement>(null);
 
   const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
@@ -32,10 +48,35 @@ function App() {
     // 第一次上传文件时，自动选中第一项
     if (newFileList.length > 0 && !modifyItem) {
       const firstFile = newFileList[0];
+      const uid = firstFile.uid;
       setModifyItem({
         file: firstFile,
         url: URL.createObjectURL(firstFile.originFileObj as File),
       });
+      // 初始化缓存
+      if (!watermarkCache[uid]) {
+        setWatermarkCache((prev) => ({ ...prev, [uid]: { ...currentWatermark } }));
+      }
+    }
+  };
+
+  const handleWatermarkChange = (newWatermark: WatermarkData) => {
+    if (!modifyItem) return;
+    const uid = modifyItem.file.uid;
+    setWatermarkCache((prev) => ({ ...prev, [uid]: newWatermark }));
+    setCurrentWatermark(newWatermark); // 更新当前值，后续新建图片使用此值
+  };
+
+  const handleSelectFile = (file: UploadFile) => {
+    const uid = file.uid;
+    setModifyItem({
+      file,
+      url: URL.createObjectURL(file.originFileObj as File),
+    });
+    setScale(1);
+    // 如果缓存中有用缓存，没有则用当前值
+    if (!watermarkCache[uid]) {
+      setWatermarkCache((prev) => ({ ...prev, [uid]: { ...currentWatermark } }));
     }
   };
 
@@ -84,43 +125,44 @@ function App() {
           </Dragger>
 
           <div className="file-list">
-            {fileList.map((file) => {
-              const isActive = modifyItem?.file.uid === file.uid;
-              return (
-                <div
-                  key={file.uid}
-                  className={`file-item ${isActive ? "active" : ""}`}
-                  onClick={() => {
-                    setModifyItem({
-                      file,
-                      url: URL.createObjectURL(file.originFileObj as File),
-                    });
-                    setScale(1);
-                  }}
-                >
-                  <AsyncImage file={file} />
-                  <div className="file-info">
-                    <div className="file-name">{file.name}</div>
-                    <div className="file-meta">2.4 MB · 2024/6/15</div>
-                  </div>
-                  <button
-                    className="file-delete"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newList = fileList.filter(
-                        (f) => f.uid !== file.uid,
-                      );
-                      setFileList(newList);
-                      if (modifyItem?.file.uid === file.uid) {
-                        setModifyItem(undefined);
-                      }
-                    }}
+            <Image.PreviewGroup
+              preview={{
+                onChange: (current, prev) =>
+                  console.log(`current index: ${current}, prev index: ${prev}`),
+              }}
+            >
+              {fileList.map((file) => {
+                const isActive = modifyItem?.file.uid === file.uid;
+                return (
+                  <div
+                    key={file.uid}
+                    className={`file-item ${isActive ? "active" : ""}`}
+                    onClick={() => handleSelectFile(file)}
                   >
-                    <DeleteOutlined />
-                  </button>
-                </div>
-              );
-            })}
+                    <AsyncImage file={file} />
+                    <div className="file-info">
+                      <div className="file-name">{file.name}</div>
+                      <div className="file-meta">{((file.size || 0) / 1024 / 1024).toFixed(2)} MB</div>
+                    </div>
+                    <button
+                      className="file-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newList = fileList.filter(
+                          (f) => f.uid !== file.uid,
+                        );
+                        setFileList(newList);
+                        if (modifyItem?.file.uid === file.uid) {
+                          setModifyItem(undefined);
+                        }
+                      }}
+                    >
+                      <DeleteOutlined />
+                    </button>
+                  </div>
+                );
+              })}
+            </Image.PreviewGroup>
           </div>
         </div>
 
@@ -175,7 +217,13 @@ function App() {
             }}
           >
             {modifyItem ? (
-              <ModifyItem url={modifyItem.url} scale={scale} ref={target} />
+              <ModifyItem
+                url={modifyItem.url}
+                scale={scale}
+                watermark={watermarkCache[modifyItem.file.uid] || defaultWatermark}
+                onWatermarkChange={handleWatermarkChange}
+                ref={target}
+              />
             ) : (
               <div className="preview-empty">
                 <Empty

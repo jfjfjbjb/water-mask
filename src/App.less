@@ -65,6 +65,7 @@ html, body {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
+  line-height: 0;
 
   &::after {
     content: '';
@@ -119,6 +120,7 @@ html, body {
   justify-content: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
+  line-height: 0;
 
   .anticon {
     font-size: 16px;
@@ -184,6 +186,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 0;
 
   .anticon {
     font-size: 18px;
@@ -495,7 +498,6 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
 }
 
 .watermark-content {
@@ -520,7 +522,8 @@ html, body {
   margin-top: 6px;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.95);
-  text-shadow: 1px 0 3px rgba(0, 0, 0, 0.4);
+  // text-shadow: 1px 0 3px rgba(0, 0, 0, 0.4);
+  text-shadow: 2px 0 5px rgba(0, 0, 0, 0.5), -2px 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .watermark-location {
@@ -536,10 +539,23 @@ html, body {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
   text-shadow: 1px 0 2px rgba(0, 0, 0, 0.3);
+  
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  #root {
+    overflow: auto;
+  }
+  .app-container {
+    height: auto;
+    .header {
+      position: sticky;
+      top: 0;
+      background-color: #ffffff;
+      z-index: 10;
+    }
+  }
   .main-row {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
@@ -565,12 +581,26 @@ html, body {
     overflow: hidden;
   }
 
+  .preview-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .slider-container {
+    width: 100%;
+  }
+
+  .slider {
+    max-width: none;
+  }
+
   .preview-area {
     overflow: hidden;
     min-height: 0;
   }
 
   .preview-image {
-    max-height: 300px;
+    max-height: calc(-280px + 100vh);
   }
 }

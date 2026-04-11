@@ -10,9 +10,64 @@ import {
 import { Empty, Image } from "antd";
 import type { UploadFile } from "antd";
 import { snapdom } from "@zumer/snapdom";
+import exifr from "exifr";
+import { isEmpty } from "lodash";
 import AsyncImage from "./components/AsyncImage/Index";
 import ModifyItem from "./components/ModifyItem/Index";
 import "./App.less";
+
+interface WatermarkData {
+  time: string;
+  date: string;
+  location: string;
+  brand: string;
+}
+
+// 从图片 EXIF 中提取水印数据
+async function extractExifData(file: File): Promise<Partial<WatermarkData>> {
+  try {
+    const exif = await exifr.parse(file, {
+      pick: [
+        "DateTimeOriginal",
+        "DateTimeDigitized",
+        "DateTime",
+        "GPSLatitude",
+        "GPSLongitude",
+      ],
+    });
+
+    if (!exif) return {};
+
+    const result: Partial<WatermarkData> = {};
+
+    // 提取日期时间
+    const dateTime =
+      exif.DateTimeOriginal || exif.DateTimeDigitized || exif.DateTime;
+    if (dateTime) {
+      const d = new Date(dateTime);
+      if (!isNaN(d.getTime())) {
+        // 格式化时间 HH:mm
+        result.time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        // 格式化日期 YYYY.M.D 星期X
+        const weekDays = [
+          "星期日",
+          "星期一",
+          "星期二",
+          "星期三",
+          "星期四",
+          "星期五",
+          "星期六",
+        ];
+        result.date = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()} ${weekDays[d.getDay()]}`;
+      }
+    }
+    console.log(result);
+    return result;
+  } catch (e) {
+    console.warn("EXIF 解析失败:", e);
+    return {};
+  }
+}
 
 interface WatermarkData {
   time: string;
@@ -44,9 +99,6 @@ function App() {
     useState<WatermarkData>(defaultWatermark);
   const [objectUrlCache, setObjectUrlCache] = useState<Record<string, string>>(
     {},
-  );
-  const [modifiedWatermarkUids, setModifiedWatermarkUids] = useState<Set<string>>(
-    new Set(),
   );
   const target = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,8 +164,8 @@ function App() {
       processFilesInBatches(newFiles as unknown as UploadFile[]);
     }
 
-    // 自动选中第一项
-    if (!modifyItem && newFiles.length > 0) {
+    // 自动选中新增文件的第一项
+    if (newFiles.length > 0) {
       const firstFile = newFiles[0];
       const uid = firstFile.uid;
       if (firstFile.originFileObj) {
@@ -124,10 +176,23 @@ function App() {
         });
         setObjectUrlCache((prev) => ({ ...prev, [uid]: url }));
         if (!watermarkCache[uid]) {
-          setWatermarkCache((prev) => ({
-            ...prev,
-            [uid]: { ...currentWatermark },
-          }));
+          // 从图片 EXIF 提取水印数据，缺失字段用默认值填充
+          extractExifData(firstFile.originFileObj).then((exifData) => {
+            // EXIF 能解析出的字段直接使用，不受 currentWatermark 影响
+            const watermarkFromExif: WatermarkData = {
+              time: exifData.time ?? currentWatermark.time,
+              date: exifData.date ?? currentWatermark.date,
+              location: exifData.location ?? currentWatermark.location,
+              brand: currentWatermark.brand,
+            };
+            if (!isEmpty(exifData)) {
+              setWatermarkCache((prev) => ({
+                ...prev,
+                [uid]: watermarkFromExif,
+              }));
+            }
+            setCurrentWatermark(watermarkFromExif);
+          });
         }
       }
     }
@@ -141,7 +206,6 @@ function App() {
     const uid = modifyItem.file.uid;
     // 更新当前项水印，并标记为已修改
     setWatermarkCache((prev) => ({ ...prev, [uid]: newWatermark }));
-    setModifiedWatermarkUids((prev) => new Set(prev).add(uid));
     setCurrentWatermark(newWatermark); // 更新当前值，后续新建图片使用此值
   };
 
@@ -158,12 +222,29 @@ function App() {
       url: url || "",
     });
     setScale(1);
-    // 如果缓存中有用缓存，没有则用当前值
+    // 如果缓存中有用缓存，没有则提取 EXIF 数据
     if (!watermarkCache[uid]) {
-      setWatermarkCache((prev) => ({
-        ...prev,
-        [uid]: { ...currentWatermark },
-      }));
+      if (file.originFileObj) {
+        extractExifData(file.originFileObj).then((exifData) => {
+          const watermarkFromExif: WatermarkData = {
+            time: exifData.time ?? currentWatermark.time,
+            date: exifData.date ?? currentWatermark.date,
+            location: exifData.location ?? currentWatermark.location,
+            brand: currentWatermark.brand,
+          };
+          if (!isEmpty(exifData)) {
+            setWatermarkCache((prev) => ({
+              ...prev,
+              [uid]: watermarkFromExif,
+            }));
+          }
+        });
+      } else {
+        setWatermarkCache((prev) => ({
+          ...prev,
+          [uid]: { ...currentWatermark },
+        }));
+      }
     }
   };
 
@@ -300,8 +381,12 @@ function App() {
               <button
                 className="download-btn"
                 onClick={() => {
+                  // 提取原文件扩展名，保持输出文件后缀一致
+                  const ext =
+                    modifyItem.file.name.match(/\.[^.]+$/)?.[0] || ".jpg";
                   snapdom.download(target.current as HTMLElement, {
-                    filename: `${modifyItem.file.name}_带水印.jpg`,
+                    filename: `${modifyItem.file.name.replace(/\.[^.]+$/, "")}_带水印${ext}`,
+                    scale: 2, // 高 DPI 输出，提升手机端清晰度
                   });
                 }}
               >
@@ -325,9 +410,7 @@ function App() {
                 url={modifyItem.url}
                 scale={scale}
                 watermark={
-                  modifiedWatermarkUids.has(modifyItem.file.uid)
-                    ? watermarkCache[modifyItem.file.uid]
-                    : currentWatermark
+                  watermarkCache[modifyItem.file.uid] || currentWatermark
                 }
                 onWatermarkChange={handleWatermarkChange}
                 ref={target}

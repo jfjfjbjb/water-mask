@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Modal, Slider, Button } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 // import { CameraOutlined } from "@ant-design/icons";
 import type { UploadFile } from "antd";
 import { isEmpty } from "lodash";
@@ -31,6 +33,15 @@ function App() {
   const [objectUrlCache, setObjectUrlCache] = useState<Record<string, string>>(
     {},
   );
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [downloadScale, setDownloadScale] = useState(() => {
+    const saved = localStorage.getItem("downloadScale");
+    return saved ? Number(saved) : 2;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("downloadScale", String(downloadScale));
+  }, [downloadScale]);
 
   const handleFileAdd = (newFiles: UploadFile[]) => {
     setFileList((prev) => [...prev, ...newFiles]);
@@ -143,6 +154,11 @@ function App() {
           </div>
           <span className="header-title">水印magic</span>
         </div>
+        <Button
+          type="text"
+          icon={<SettingOutlined />}
+          onClick={() => setSettingsOpen(true)}
+        />
       </header>
 
       <div className="main-row">
@@ -161,8 +177,26 @@ function App() {
           watermark={modifyItem ? (watermarkCache[modifyItem.file.uid] || currentWatermark) : currentWatermark}
           onScaleChange={setScale}
           onWatermarkChange={handleWatermarkChange}
+          downloadScale={downloadScale}
         />
       </div>
+
+      <Modal
+        title="设置"
+        open={settingsOpen}
+        onCancel={() => setSettingsOpen(false)}
+        footer={null}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 8 }}>下载质量 (scale: {downloadScale})</div>
+          <Slider
+            min={1}
+            max={5}
+            value={downloadScale}
+            onChange={setDownloadScale}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };

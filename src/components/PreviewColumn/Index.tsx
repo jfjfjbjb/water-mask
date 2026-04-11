@@ -16,10 +16,11 @@ interface PreviewColumnProps {
   watermark: WatermarkData;
   onScaleChange: (scale: number) => void;
   onWatermarkChange: (watermark: WatermarkData) => void;
+  downloadScale: number;
 }
 
 const PreviewColumn = forwardRef<HTMLDivElement, PreviewColumnProps>(
-  ({ modifyItem, scale, watermark, onScaleChange, onWatermarkChange }) => {
+  ({ modifyItem, scale, watermark, onScaleChange, onWatermarkChange, downloadScale }) => {
     const target = useRef<HTMLDivElement>(null);
 
     return (
@@ -56,7 +57,7 @@ const PreviewColumn = forwardRef<HTMLDivElement, PreviewColumnProps>(
                   modifyItem.file.name.match(/\.[^.]+$/)?.[0] || ".jpg";
                 snapdom.download(target.current as unknown as HTMLElement, {
                   filename: `${modifyItem.file.name.replace(/\.[^.]+$/, "")}_带水印${ext}`,
-                  scale: 2,
+                  scale: downloadScale,
                 });
               }}
             >

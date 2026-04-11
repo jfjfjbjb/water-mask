@@ -10,7 +10,9 @@
       "Read(//dev/d/workspace/water-mask/src/**)",
       "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm list:*)",
+      "Bash(npm uninstall:*)"
     ]
   },
   "plansDirectory": "plans"

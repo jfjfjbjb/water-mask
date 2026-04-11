@@ -1,0 +1,230 @@
+/* Upload Column */
+.upload-column {
+  padding: 16px;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* Upload Zone */
+.upload-zone {
+  height: 100px;
+  border: 1.5px dashed var(--border-light);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--accent);
+  }
+}
+
+.upload-zone-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+
+  .anticon {
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+}
+
+.upload-zone-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.upload-zone-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* File List */
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 2px;
+  }
+}
+
+/* Ant Design Upload Override */
+.ant-upload {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-upload-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 2px;
+  }
+}
+
+.ant-upload-list-item {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.ant-upload-drag {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+
+  &:hover,
+  &:focus,
+  &:focus-within,
+  &.ant-upload-drag-hovering {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  &-container {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+.ant-image {
+  border: none !important;
+  outline: none !important;
+
+  &-img {
+    border: none !important;
+    outline: none !important;
+  }
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: var(--accent-light);
+    border-color: rgba(37, 99, 235, 0.15);
+  }
+
+  &.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+  }
+}
+
+.file-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--border-light);
+  flex-shrink: 0;
+  overflow: hidden;
+
+  .ant-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+
+    &-img {
+      border-radius: 6px;
+    }
+  }
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.file-delete {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(234, 67, 53, 0.08);
+    opacity: 1;
+  }
+
+  .anticon {
+    font-size: 13px;
+    color: #ea4335;
+  }
+}

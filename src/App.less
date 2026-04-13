@@ -19,9 +19,12 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   background: var(--bg-secondary);
   color: var(--text-primary);
 }
@@ -40,6 +43,7 @@ html, body {
   height: 52px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 20px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-light);
@@ -59,23 +63,16 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #3a3a3a 0%, #1a1a1a 100%);
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  // background: linear-gradient(145deg, #3a3a3a 0%, #1a1a1a 100%);
+  // box-shadow:
+  //   0 2px 8px rgba(0, 0, 0, 0.2),
+  //   inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
   line-height: 0;
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
-    border-radius: 9px 9px 0 0;
+  img {
+    width: 100%;
   }
 
   .anticon {
@@ -390,7 +387,7 @@ html, body {
 
 .preview-empty {
   align-self: self-start;
-  margin-top: 64px
+  margin-top: 64px;
 }
 
 /* Preview Toolbar */
@@ -510,7 +507,9 @@ html, body {
   font-size: 52px;
   font-weight: 300;
   color: white;
-  text-shadow: 2px 0 5px rgba(0, 0, 0, 0.5), -2px 0 5px rgba(0, 0, 0, 0.5);
+  text-shadow:
+    2px 0 5px rgba(0, 0, 0, 0.5),
+    -2px 0 5px rgba(0, 0, 0, 0.5);
   letter-spacing: -1px;
 }
 
@@ -523,7 +522,9 @@ html, body {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.95);
   // text-shadow: 1px 0 3px rgba(0, 0, 0, 0.4);
-  text-shadow: 2px 0 5px rgba(0, 0, 0, 0.5), -2px 0 5px rgba(0, 0, 0, 0.5);
+  text-shadow:
+    2px 0 5px rgba(0, 0, 0, 0.5),
+    -2px 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .watermark-location {
@@ -539,7 +540,6 @@ html, body {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
   text-shadow: 1px 0 2px rgba(0, 0, 0, 0.3);
-  
 }
 
 /* Responsive */
@@ -602,5 +602,9 @@ html, body {
 
   .preview-image {
     max-height: calc(-280px + 100vh);
+  }
+
+  .watermark-content {
+    bottom: 3em;
   }
 }

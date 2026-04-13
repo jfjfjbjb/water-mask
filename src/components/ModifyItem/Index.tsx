@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import posUrl from "../../assets/pos.svg";
 
 interface WatermarkData {
@@ -17,27 +17,44 @@ interface ModifyItemProps {
 
 const ModifyItem = forwardRef<HTMLDivElement, ModifyItemProps>(
   ({ url, scale, watermark, onWatermarkChange }, ref) => {
+    const [isComposing, setIsComposing] = useState(false);
+
     const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+      // 防止 IME 输入未完成时触发 blur
+      if (isComposing) return;
+
       const overlay = e.currentTarget;
       const timeEl = overlay.querySelector(".watermark-time");
-      const infoEl = overlay.querySelector(".watermark-info");
+      const dateEl = overlay?.querySelector(".watermark-date");
+      const locationEl = overlay?.querySelector(".watermark-location span");
       const brandEl = overlay.querySelector(".watermark-brand");
 
       const newWatermark: WatermarkData = {
         time: timeEl?.textContent || "",
-        date: infoEl?.firstChild?.textContent || "",
-        location: infoEl?.querySelector(".watermark-location")?.textContent?.replace(/贵阳市南明区万象城/, "").trim() || "",
+        date: dateEl?.textContent || "",
+        location: locationEl?.textContent || "",
         brand: brandEl?.textContent || "",
       };
 
       onWatermarkChange(newWatermark);
     };
 
+    const handleCompositionStart = () => setIsComposing(true);
+    const handleCompositionEnd = () => {
+      setIsComposing(false);
+    };
+
     return (
       <div className="preview-area">
         <div className="image-container" ref={ref}>
           <img className="preview-image" src={url} alt="" />
-          <div className="watermark-overlay" contentEditable onBlur={handleBlur}>
+          <div
+            className="watermark-overlay"
+            contentEditable
+            onBlur={handleBlur}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
+          >
             <div className="watermark-content">
               <div
                 className="watermark-time"
@@ -49,14 +66,10 @@ const ModifyItem = forwardRef<HTMLDivElement, ModifyItemProps>(
                 className="watermark-info"
                 style={{ fontSize: Math.ceil(14 * scale) }}
               >
-                <span>{watermark.date}</span>
+                <span className="watermark-date">{watermark.date}</span>
                 <span className="watermark-location">
-                  <img
-                    width={Math.ceil(14 * scale)}
-                    src={posUrl}
-                    alt=""
-                  />
-                  {watermark.location}
+                  <img width={Math.ceil(14 * scale)} src={posUrl} alt="" />
+                  <span>{watermark.location}</span>
                 </span>
               </div>
             </div>

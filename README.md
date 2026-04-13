@@ -28,3 +28,5 @@ npm run dev
 ```bash
 npm run build
 ```
+## 预览图
+<img width="1375" height="867" alt="image" src="https://github.com/user-attachments/assets/adfc9124-73af-43f0-960a-d99b7f75b56e" />
